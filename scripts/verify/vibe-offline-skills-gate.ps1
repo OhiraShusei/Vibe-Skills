@@ -11,6 +11,63 @@ function New-CaseInsensitiveSet {
     return New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
 }
 
+function Get-BytesHash {
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [byte[]]$Bytes
+    )
+
+    $stream = [System.IO.MemoryStream]::new($Bytes)
+    try {
+        return (Get-FileHash -InputStream $stream -Algorithm SHA256).Hash.ToLower()
+    } finally {
+        $stream.Dispose()
+    }
+}
+
+function Test-TextLikeFile {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [byte[]]$Bytes
+    )
+
+    $textExt = @(
+        ".md", ".txt", ".json", ".ps1", ".psm1", ".sh",
+        ".yml", ".yaml", ".toml", ".ini", ".cfg", ".xml",
+        ".csv", ".tsv", ".js", ".ts", ".jsx", ".tsx",
+        ".py", ".rb", ".go", ".rs", ".java", ".c", ".cpp", ".h", ".hpp",
+        ".css", ".html", ".htm", ".sql"
+    )
+
+    $ext = [System.IO.Path]::GetExtension($Path).ToLowerInvariant()
+    if ($textExt -contains $ext) {
+        return $true
+    }
+
+    return -not ($Bytes -contains 0)
+}
+
+function Get-NormalizedFileHash {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    $rawBytes = [System.IO.File]::ReadAllBytes($Path)
+    if (-not (Test-TextLikeFile -Path $Path -Bytes $rawBytes)) {
+        return Get-BytesHash -Bytes $rawBytes
+    }
+
+    $text = [System.Text.Encoding]::UTF8.GetString($rawBytes)
+    $normalized = $text.Replace("`r`n", "`n").Replace("`r", "`n")
+    $normalizedBytes = [System.Text.Encoding]::UTF8.GetBytes($normalized)
+    return Get-BytesHash -Bytes $normalizedBytes
+}
+
 function Get-SkillDirHash {
     param(
         [Parameter(Mandatory = $true)]
@@ -23,19 +80,17 @@ function Get-SkillDirHash {
 
     foreach ($file in $files) {
         $relative = $file.FullName.Substring($DirPath.Length + 1).Replace('\', '/')
-        $fileHash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLower()
+        if ($relative.Equals("config/skills-lock.json", [System.StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
+        $fileHash = Get-NormalizedFileHash -Path $file.FullName
         $entries.Add("$relative`:$fileHash")
         $totalBytes += $file.Length
     }
 
     $joined = [string]::Join("`n", $entries)
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($joined)
-    $stream = [System.IO.MemoryStream]::new($bytes)
-    try {
-        $dirHash = (Get-FileHash -InputStream $stream -Algorithm SHA256).Hash.ToLower()
-    } finally {
-        $stream.Dispose()
-    }
+    $dirHash = Get-BytesHash -Bytes $bytes
 
     return [pscustomobject]@{
         dir_hash   = $dirHash
@@ -188,7 +243,7 @@ if (-not $SkipHash) {
                     actual   = "<missing>"
                 }
             } else {
-                $actualSkillMdHash = (Get-FileHash -LiteralPath $skillMdPath -Algorithm SHA256).Hash.ToLower()
+                $actualSkillMdHash = Get-NormalizedFileHash -Path $skillMdPath
                 if ($actualSkillMdHash -ne $expectedSkillMdHash.ToLower()) {
                     $skillMdMismatches += [pscustomobject]@{
                         skill    = $name
