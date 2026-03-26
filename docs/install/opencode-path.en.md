@@ -1,18 +1,14 @@
-# OpenCode Install Path
+# OpenCode Install and Use Guide
 
-## Scope
+## What The Repository Installs
 
-This path is a truthful `preview` lane, not a claim of full OpenCode closure.
-
-The repository can install:
-
-- runtime-core payload
-- Vibe-Skills skill payload
+- repo-distributed content
+- Vibe-Skills skill content
 - OpenCode command wrappers
 - OpenCode agent wrappers
 - an example `opencode.json` scaffold
 
-The repository does **not** take ownership of:
+## What Still Stays Host-Local
 
 - the real `~/.config/opencode/opencode.json`
 - provider credentials
@@ -40,9 +36,12 @@ Default target root:
 - `OPENCODE_HOME` when set
 - otherwise `~/.config/opencode`
 
+The default examples omit `--profile`, which is equivalent to `full`.
+If you need the “Framework Only + Customizable Governance” variant, append `--profile minimal` to install/check explicitly.
+
 ## Project-Local Install
 
-Use a project-local OpenCode root when you want the preview payload to stay inside the repo:
+Use a project-local OpenCode root when you want the install result to stay inside the repo:
 
 ```bash
 ./install.sh --host opencode --target-root ./.opencode
@@ -50,10 +49,11 @@ Use a project-local OpenCode root when you want the preview payload to stay insi
 ```
 
 The same target can be used from PowerShell with `-TargetRoot .\.opencode`.
+For the framework-only variant, also append `-Profile minimal` explicitly.
 
 ## What Gets Written
 
-Preview install writes:
+The install writes:
 
 - `skills/**`
 - `commands/*.md`
@@ -62,7 +62,7 @@ Preview install writes:
 - `agent/*.md`
 - `opencode.json.example`
 
-Plural and singular command/agent directories are both materialized during preview because the current OpenCode docs and runtime ecosystem still show path drift.
+Plural and singular command/agent directories are both materialized because the current OpenCode docs treat plural directories as the primary layout while still supporting singular names for backwards compatibility.
 
 ## How To Use
 
@@ -77,7 +77,7 @@ You can also invoke the skill directly in chat, for example:
 - `Use the vibe skill to plan this change.`
 - `Use the vibe skill to implement the approved plan.`
 
-Custom agents installed by the preview payload:
+Custom agents installed by this path:
 
 - `vibe-plan`
 - `vibe-implement`
@@ -97,12 +97,12 @@ The repository also ships a smoke verifier:
 python3 ./scripts/verify/runtime_neutral/opencode_preview_smoke.py --repo-root . --write-artifacts
 ```
 
-## Current Proof Note
+## Current Verification Note
 
-The committed preview smoke verifier now proves on local OpenCode CLI `1.2.27` that:
+The committed smoke verifier has been validated on local OpenCode CLI `1.2.27` and confirms that:
 
 - `opencode debug paths` resolves the isolated OpenCode root correctly
 - `opencode debug skill` detects the installed `vibe` skill
-- `opencode debug agent vibe-plan` detects the installed preview agent
+- `opencode debug agent vibe-plan` detects the installed agent
 
-The lane still remains `preview` because command execution replay and platform-specific proof bundles are not yet frozen.
+If you need the deeper adapter contract and proof details, continue with `dist/*`, `adapters/*`, and `docs/universalization/*`.
