@@ -839,7 +839,7 @@ function New-VibeExecutionTopology {
         [Parameter(Mandatory)] [string]$GovernanceScope,
         [Parameter(Mandatory)] [object]$BenchmarkPolicy,
         [Parameter(Mandatory)] [object]$TopologyPolicy,
-        [Parameter(Mandatory)] [object[]]$ApprovedDispatch
+        [Parameter(Mandatory)] [AllowEmptyCollection()] [object[]]$ApprovedDispatch
     )
 
     $profileDef = Get-VibeExecutionTopologyProfile -BenchmarkPolicy $BenchmarkPolicy -TopologyPolicy $TopologyPolicy -Grade $Grade
