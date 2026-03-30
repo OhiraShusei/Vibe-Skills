@@ -1,4 +1,4 @@
-﻿# Codex VCO Ecosystem Maintenance Principles
+# Codex VCO Ecosystem Maintenance Principles
 
 Status: Active
 Audience: Maintainers of Codex-compatible VCO ecosystem
